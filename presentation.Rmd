@@ -1,0 +1,194 @@
+---
+title: "Untitled"
+author: "Thomas Fischer"
+date: "27 5 2020"
+output: 
+  beamer_presentation:
+    citation_package: natbib
+
+bibliography: references/references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Introduction
+
+## NRP - Overview
+- Conducted by Swiss Diabetes Registry
+- Longitudinal cohort study of Diabetes patients
+- Ran from 2002 to 2012
+- Intervention: tailored treatment guidelines for Diabetes patients
+- Outcomes: 
+  - Healthcare accessibility and delivery (RQ1)
+  - Individual and population health (RQ2)
+  - Health care system outcomes and variation in care (RQ3)
+  
+## NRP - Intervention assignment regions 
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.5\textwidth]{figures/int_alloc.png}
+  \caption{Treatment allocations\label{fig:int_alloc}}
+\end{figure}
+
+## Project responsibilities
+- Andre Moser (Course administrator)
+- Joël Meili (Project leader, RQ1)
+- Xijin Chen (RQ2)
+- Thomas Fischer (RQ3)
+
+# Healthcare accessibility and delivery (RQ1)
+
+## Introduction
+what the positive and negative effects of the intervention were related to access and delivery of Diabetes care, if there were any. To tackle this question 
+
+
+## Method
+
+I used the definition of access to Diabetes care and tried to dissect the question into the 5 dimensions of health care \citep{accessA}
+
+- \textbf{Availability}: relationship between supply and demand for health care services
+- \textbf{Accessibility}: geographical proximity to health care providers
+- \textbf{Accommodation}: relationship between how health care services are organized and the client's ability to accommodate these factors.
+- \textbf{Affordability}: costs of health care services and the ability of a patient to cover
+- \textbf{Acceptability}: patient's attitude towards the perceived characteristics of an intervention
+
+## Results
+
+- No significant changes to dimension of availability and accessibility. 
+- Follow-up period of 10 years may be too short to detect trends in supply and demand. 
+
+Nevertheless, the following figure illustrates that the baseline availability of cantonal hospital density was substantially larger in the control group than in the intervention group. However, the cantonal GP density is larger in the intervention groups than in the control group. One could assume that the intervention groups were chosen in this manner because the cantonal GP density was larger, hence the assumed effect might be easier to observe. Unfortunately, there was no relevant data to address the dimension of accommodation and accceptability, hence the analysis is focused on the affordability and delivery of Diabetes care.
+
+## Discussion - Availability
+
+
+
+
+
+# Individual and population health (RQ2)
+
+## Introduction
+
+## Discussion
+- Clinical guidelines intend to improve the quality of care.
+- Can also introduce economic inefficiencies, and invite over-use. 
+- Signs of overtreatment than undertreated for diabetes.
+- Guidelines need to be designed based on substantial evidence 
+
+Over-treatment can be defined as an unnecessary or over-use of treatment. It may lead to potential patient harms and excessive costs in health care. In this project, we have noticed that the use of intensive Glycemic control, Metformin has no positive result for patients, in terms of health-related quality of life, while the problem of adverse events is a big issue. The problem on the cost is also obvious. Alternatively, physical activities are more recommended in terms of clinical efficiency.
+
+
+
+# Health care system outcomes and variation in care (RQ3)
+
+```{r, include=FALSE,message=FALSE,warning=FALSE}
+library(dplyr)
+library(texreg)
+library(ggplot2)
+source("source/prepare_data.R")
+source("source/models_qaly.R")
+source("source/models_cpq.R")
+sdc_data$fit_qaly <- fitted(fit_qaly1)
+sdc_data$fit_cpq <- fitted(fit_cpq2)
+```
+
+## Introduction
+
+## Method
+- A linear regression model was used to estimate the intervention effect on QALY 
+- A log-linear regression model was used to estimate the intervention effect on cost per QALY
+- Variability in care was evaluated graphically.
+
+
+## Results - Quality of care
+
+
+## Results - Cost-effectiveness of care
+
+## Results - Variation in care
+
+```{r, eval=FALSE,include=FALSE,echo=FALSE, message=FALSE,warning=FALSE}
+tmp <- sdc_data %>%
+  group_by(canton_abr, canton_0, intgroup_0) %>%
+  summarise(resid_qaly = mean(qaly-fit_qaly)) %>%
+  ungroup() %>% 
+  mutate(geometry = canton_geom(canton_0))
+
+png("figures/variation_qaly.png")
+ggplot(tmp) + 
+  geom_sf(aes(geometry = geometry, fill = resid_qaly, col = intgroup_0)) + 
+  geom_sf_label(aes(geometry = geometry, label = canton_abr),
+                size=2, alpha = 0.4) + 
+  xlab("") + ylab("") +
+  theme_minimal() +
+  theme(legend.position="bottom", legend.box = "horizontal")
+dev.off()
+```
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.5\textwidth]{figures/variation_qaly.png}
+  \caption{Average residual QALY \label{fig:variation_qaly}}
+\end{figure}
+
+## Results - Variation in care
+
+- Quality of health-care appears to be higher in french-speaking cantons
+- QALY was higher than expected in Appenzell-Ausserrhoden
+- QALY was lower than expected in Uri
+
+## Results - Variation in care
+
+```{r, eval=FALSE,include=FALSE, echo=FALSE,message=FALSE,warning=FALSE}
+tmp <- sdc_data %>%
+  group_by(canton_abr, canton_0, intgroup_0) %>%
+  summarise(resid_cpq = mean(cpq - exp(fit_cpq))) %>%
+  ungroup() %>% 
+  mutate(geometry = canton_geom(canton_0))
+png("figures/variation_cpq.png")
+ggplot(tmp) + 
+  geom_sf(aes(geometry = geometry, fill = resid_cpq, col = intgroup_0)) + 
+  geom_sf_label(aes(geometry = geometry, label = canton_abr),
+                size=2, alpha = 0.4) + 
+  xlab("") + ylab("") +
+  theme_minimal() +
+  theme(legend.position="bottom", legend.box = "horizontal")
+dev.off()
+```
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.5\textwidth]{figures/variation_cpq.png}
+  \caption{Average residual CPQ \label{fig:variation_cpq}}
+\end{figure}
+
+## Results - Variation in care
+
+- Predicted cost per QALY was closest to the truth in french-speaking cantons (except Jura), Schaffhausen, Basel, Thurgau, and Appenzell Ausserrhoden.
+- Jura, Uri, and Appenzell-Innerrhoden had larger CPQ on average than predicted by our model. 
+
+## Discussion - Health care outcomes
+- The physical activity protocol was the most benefitial in terms of QALY
+- The pharmacotherapy protocol did not yield a significant benefit compared to the control. 
+- Both treatment protocols were less cost-effective than the control (increased costs per QALY). 
+- Results are in line with those of similar studies (such as \cite{william2015}).
+- Hospdens marginally significant for QALY, and no evidence for an effect on cost per QALY.
+
+## Discussion - Variation in care
+
+- Some cantons performed worse ceteris paribus than their peers
+- In particular, canton Uri had worse QALY and CPQ on average.
+- May be indicative of competition between cantons
+
+## Discussion - Limitations
+- Lack of randomization: interventions assigned to patients by canton of residence. Hence, our results are only observational
+- Lack of information about medical history of individual patients (potentially to protect patient privacy).
+- Relatively long follow-up time may be appropriate to study properties of the health care system, but much can change in 10 years for a patient.
+
+## Discussion - Implications of findings
+- Cost-benefit analysis indicates that neither treatment protocol should be implemented from an economic perspective
+- However: substantial increase in QALY for physical activity group 
+- Future research should explore the effectiveness of physical activity protocol in a randomized trial / N-of-1 trials

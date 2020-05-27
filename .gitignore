@@ -1,0 +1,8 @@
+full_report*
+01_*
+03*
+Makefile
+*.Rproj
+.Rhistory
+.Rproj.user
+data/SDC_III.csv
