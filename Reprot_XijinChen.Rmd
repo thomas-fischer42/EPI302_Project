@@ -1,0 +1,294 @@
+---
+title: "Course EPI302: Introduction to Health Care Epidemiology "
+author: "Xijin Chen"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning = FALSE)
+library(ggswissmaps)
+library(sf)
+library(ggbeeswarm)
+```
+
+
+# Introduction
+
+Currently, the estimated population of people with diabetes mellifluous is approximately 387 million all over the world. Glycemic control and intensive treatment are considered to be an effective treatment for complications of the disease. 
+
+Clinical guidelines are systematically developed statements to assist practitioner and patient decisions about appropriate health care for specific clinical circumstances. They may offer concise instructions on which diagnostic or screening tests to order, how to provide medical or surgical services, how long patients should stay in hospital, or other details of clinical practice. 
+
+Our current knowledge, however, is mainly derived from intervention trials usually including strictly defined patient groups and are carried out according to study protocols. Observational studies, which is more common in reality, have revealed discrepancies between recommended treatment goals resulting from those latter studies and actual standard of care due to unwarranted variation. There is a pressing need, therefore, to assess the standard of care and confirm the feasibility and effectiveness of proposed management trends in both specialty clinic and community-based cohorts.
+
+This NRP project conducted by Swiss Diabetes Registry is aimed at investigating the effects of a tailored treatment guidelines for Diabetes patients, specialized training of general practitioners (GP) and medical practice assistants (MPA) and health care system suggestions.
+
+\textbf{The research question is: How does the intervention affect individual and population health?}
+
+
+# Methods
+
+Descriptive statistics, in the form of tables and plots, is used in this report.
+
+```{r}
+dat <- read.csv2("data/SDC_III.csv")
+dat$intgroup_0 <- as.factor(dat$intgroup_0)
+dat$cvd <- as.factor(dat$cvd)
+dat$cvd <- plyr::revalue(dat$cvd, c("0"="No CVD",
+                                    "1"="CVD"))
+dat$death <- as.factor(dat$death)
+dat$death <- plyr::revalue(dat$death, c("0"="Death",
+                                    "1"="Perfect health"))
+
+dat$afford_0 <- as.factor(dat$afford_0)
+dat$afford_9 <- as.factor(dat$afford_9)
+dat$afford_0 <- plyr::revalue(dat$afford_0, c("0"="CannotAfford",
+                                            "1"="CanAfford"))
+dat$afford_9 <- plyr::revalue(dat$afford_9, c("0"="CannotAfford",
+                                            "1"="CanAfford"))
+dat$hrqolcat_0 <- as.factor(dat$hrqolcat_0)
+dat$hrqolcat_0 <- plyr::revalue(dat$hrqolcat_0,c("0"="Not high",
+                                                 "1"="High"))
+
+dat$hrqolcat_9 <- as.factor(dat$hrqolcat_9)
+dat$hrqolcat_9 <- plyr::revalue(dat$hrqolcat_9,c("0"="Not high",
+                                                 "1"="High"))
+
+dat$ssedscore_d <- dat$ssedscore_9 - dat$ssedscore_0
+dat$gpdenscat_0 <- as.factor(dat$gpdenscat_0)
+dat$intgroup_0 <- plyr::revalue(dat$intgroup_0, c("1"="Control group",
+                                            "2"="Pharmacotherapy",
+                                            "3"="Physical activity"))
+dat$visits3_0 <- as.factor(dat$visits3_0)
+dat$visits3_0 <-  plyr::revalue(dat$visits3_0,c("0"="less than 3 GP visits",
+                                                "1"="more than 3 visits"))
+
+dat$visits3_9 <- as.factor(dat$visits3_9)
+dat$visits3_9 <-  plyr::revalue(dat$visits3_9,c("0"="less than 3 GP visits",
+                                                "1"="more than 3 GP visits"))
+
+dat$hospdenscat_0 <- as.factor(dat$hospdenscat_0)
+dat$hosp10kmdenscat_0 <- as.factor(dat$hosp10kmdenscat_0)
+
+dat$smok_0 <- as.factor(dat$smok_0)
+dat$smok_0 <-  plyr::revalue(dat$smok_0,c("0"="Not smoke",
+                                                "1"="Smoke"))
+
+dat$smok_9 <- as.factor(dat$smok_9)
+dat$smok_9 <-  plyr::revalue(dat$smok_9,c("0"="Not smoke",
+                                                "1"="Smoke"))
+
+dat$metformin_0 <- as.factor(dat$metformin_0)
+# dat$metformin_0 <-  plyr::revalue(dat$metformin_0,c("0"="No Metformin",
+#                                                 "1"="Metformin"))
+dat$metformin_9 <- as.factor(dat$metformin_9)
+# dat$metformin_9 <-  plyr::revalue(dat$metformin_9,c("0"="No Metformin",
+#                                                 "1"="Metformin"))
+
+dat$pa_0 <- as.factor(dat$pa_0)
+dat$pa_0 <-  plyr::revalue(dat$pa_0,c("0"="Low physical activity",
+                                      "1"="Moderate to high activity"))
+dat$pa_9 <- as.factor(dat$pa_9)
+dat$pa_9 <-  plyr::revalue(dat$pa_9,c("0"="Low physical activity",
+                                      "1"="Moderate to high activity"))
+
+give.median <- function(x){
+  return(c(y = median(x) - 1.7, label = round(median(x),2)))
+}
+give.mean <- function(x){
+  return(c(y = mean(x) + 1.7, label = round(mean(x),2)))
+}
+```
+
+## Variable of intervention
+
+* \textbf{Intervention}: A treatment protocol to support shared-decision making is supported.
+
+1. GP visits at least three times every year (from SSED guideline) is encouraged;
+
+2. Smoking reduction is encouraged;
+
+3. Physical active lifestyle or an intensiﬁed pharmacotherapy treatment is recommended depending on regions.
+
+![Main intervention of treatment protocol](./fig1.png)
+
+
+
+```{r,fig.cap="Good Diabetes management score in 2002 and 2012",fig.height=2.5}
+give.median <- function(x){
+  return(c(y = median(x) - 1.7, label = round(median(x),2)))
+}
+give.mean <- function(x){
+  return(c(y = mean(x) + 1.7, label = round(mean(x),2)))
+}
+
+ssedscore0 <- ggplot(dat,aes(x=intgroup_0,y=ssedscore_0))+
+  geom_boxplot(aes(color=intgroup_0))+
+  theme(legend.title = element_blank(),
+        axis.title.x = element_blank(),
+        legend.position = "none",
+        axis.text.x = element_text(size=8))+
+  stat_summary(fun.data = give.median,geom = "text")+
+  stat_summary(fun.data = give.mean,geom = "text",col="red")
+
+
+ssedscore9 <- ggplot(dat,aes(x=intgroup_0,y=ssedscore_9))+
+  geom_boxplot(aes(color=intgroup_0))+
+  theme(legend.title = element_blank(),
+        axis.title.x = element_blank(),
+        legend.position = "none",
+        axis.text.x = element_text(size=8))+
+  stat_summary(fun.data = give.median,geom = "text")+
+  stat_summary(fun.data = give.mean,geom = "text",col="red")
+
+pdf("figures/ssedscores.pdf")
+ggpubr::ggarrange(ssedscore0,ssedscore9,nrow=1,ncol=2)
+dev.off()
+```
+
+
+## \textbf{Outcomes}
+
+1. Comoborbidites
+
+2. Costs and affordability
+
+3. Health-related quality of life and quality-adjusted life years
+
+4. Accessibility
+
+# Results
+
+The distribution of the guideline is as follows: the majority of the the study population had the guideline recommended Pharmacotherapy (57\%) and the counterpart for Physical activity or Control group are 17\% and 26\%. 
+
+
+1. The principal benefit of guidelines is to improve the quality of care received by patients. However, patients may suffer from the limitation of guidelines, that is due to the wrong or not informative enough recommendations. 
+
+There is no significant difference on the death rate and the occurrence of comorbidities among these three groups. Death rate is 93.7\%, 93.8\% and 93.9\% in the control group, pharmacotherapy and physical activity group, respectively. Proportion of patients with CVD are 25.11\% in the control group, 24.70\% in the Pharmacotherapy group and 24.97\% in the physical activity group.
+
+The smoking population has decreased in all treatment groups. 1.31\% and 1.38\% in Pharmacotherapy group and Physical activity group respectively. While there is an increase of 0.50\% of control group. Smoking do have an effect on Comoborbidites, the proportion of CVD in the smoking group (27.1\%) is larger than that in the non-smoking group (24.8\%), leading to inpatient hospital admission.
+
+Physical activity encouragement by the treatment group help to improve the health-related quality of life. In 2012, 52.4\% of the population with  moderate to high activity has high-rate health-related quality of life. When the counterpart in the patient with low physical activity has only 8.51\%.
+
+
+The information about Metformin in the guideline helps to increase the proportion of patients using it. In the Pharmacotherapy group, 57\% of the patients used Metfotmin, while there are 25.7\% in the physical activity group and 17.2\% in the control group, respectively. Patients used Metformin are significantly more likely to have gastrointestinal adverse effects and comorbitidies. (11.26\% in the group with no Metformin and 75.5\% in the group with Metformin). While in terms of the Health-related quality of life, Metformin does not have an significant benefit. Besides, when it comes to the Comoborbidites, the proportion of patients with cvd have no significant change in either the group had Metformin or the group not taking Metformin. Thus, we cannot conclude the use of Metformin can have a positive effect on the patients.
+
+
+The limitation in terms of the Metformin use is quite interesting. Even though it is widely used for Diabetes patients, we do not see benefit for patients. There is a list of possible reason:
+
+
+
+- Metformin is used together with diet and exercise to improve blood sugar control in adults with type II diabetes mellitus. From 2002 to 2012, I have observed an increase of proportion with "low physical activity" in the group with Metformin, from 57.68\% to 63.57\%.
+
+- Many people stop taking their diabetes medication. In the intervention group with Pharmacotherapy, 55.67\% of patients in this group take metformin in 2002, while in 2012, there are 46.28\% taking Metformin and 6.18\% we have no information. Therefore, the adherence to is also a big issue in the guideline.
+
+- There is an unwanted variation across groups with different education levels. I look into detail of two different groups in the intervention group with Pharmacotherapy. It seems that patients with higher education may not adhere to the guidelines, but more based on their own acknowledgement.
+\begin{center}
+\begin{tabular}{ c c c c}
+ Education level &  Compulsory & Secondary & Tertiary\\
+ No Metformin (2002) to Metformin (2012) & 22.06\% & 30.17\% &  47.77\% \\ 
+ Metformin (2002) to No Metformin (2012) & 21.36\% & 29.56\% & 49.08\% \\  
+\end{tabular}
+\end{center}
+
+- Age is also a confounder, indicating that the benefit of aggressive diabetes treatment declines with age.
+
+
+
+  
+
+2. Accessibility and availability of the Diabetes care.
+
+
+The guideline encouraged availability of heath care by more GP visits. Control group has a 9.21\% decrease of the population receiving at least 3 GP visits, Pharmacotherapy group has an increase of 6.74\% and Physical activity has an increase of 6.18\%.
+
+```{r fig.cap="Access to health are different across different intervention groups", fig.height=2.5}
+a <- ggplot(dat, aes(x=gpdens_0,color=intgroup_0,fill=intgroup_0)) + 
+ geom_density(alpha=.2)+
+ xlab("Cantonal GP visit density in 2002")+
+ ylab("")+
+ theme(legend.position = "bottom",
+       axis.title.x=element_text(size=7))
+
+b <- ggplot(dat, aes(x=hospdens_0,color=intgroup_0,fill=intgroup_0)) + 
+ geom_density(alpha=.2)+
+ xlab("Hospital density in 2002")+
+ ylab("")+
+ theme(legend.position = "bottom",
+       axis.title.x=element_text(size=7))
+
+c <- ggplot(dat, aes(x=hosp10kmdens_0,color=intgroup_0,fill=intgroup_0)) + 
+ geom_density(alpha=.2)+
+ xlab("Cantonal buffer hospital density in 2002")+
+ ylab("")+
+ theme(legend.position = "bottom",
+       axis.title.x=element_text(size=7))
+
+pdf("figures/hospdens.pdf")
+ggpubr::ggarrange(a,b,c,nrow=3,common.legend=TRUE)
+dev.off()
+```
+
+In terms of the Cantonal GP visit density, it varies a lot across different groups. In terms of the control group, the majority of patients get less than 250 GP per canton.
+
+3. Affordability 
+
+The source of affordability is various: GP visit. Metformin, physical activity (quite small), surgery and inpatient treatment. From 2002 to 2012, the proportion who cannot afford has decreased. The smaller decrease is in the Pharmacotherapy, 0.70\%, while the control group and the physical activity group have an decrease 5.78\% and 5.96\%. The intensive treatment Metformin may have a negative effect on the affordability, while psychical activity group does not have such kind of negative effect.
+
+
+
+# Discussion
+
+Clinical guidelines if designed appropriately work to improve the quality of care. In the face of these mixed consequences, developed guidelines is required to take multiple factors into account to avoid economic inefficiencies and over-use. In this project, medicare recipients are more frequently overtreated than undertreated for diabetes.
+
+
+Over-treatment can be defined as an unnecessary or over-use of treatment. It may lead to potential patient harms and excessive costs in health care. In this project, we have noticed that the use of intensive Glycemic control, Metformin has no positive result for patients, in terms of health-related quality of life, while the problem of adverse events is a big issue. The problem on the cost is also obvious. Alternatively, physical activities are more recommended in terms of clinical efficiency.
+
+```{r,include=FALSE,results='hide',echo=TRUE}
+# Appendix for data analysis
+#death
+prop.table(table(dat$death,dat$intgroup_0),margin=2)
+# at least 3 GP visits
+prop.table(table(dat$visits3_9,dat$intgroup_0),margin=2)-
+  prop.table(table(dat$visits3_0,dat$intgroup_0),margin=2)
+# smoking reduction
+(prop.table(table(dat$smok_9, dat$intgroup_0),margin = 2))-
+  (prop.table(table(dat$smok_0, dat$intgroup_0),margin = 2))  
+prop.table(table(dat$smok_9,dat$death),margin = 1)
+# metaformin and affordability
+prop.table(table(dat$afford_9,dat$metformin_9),margin = 2)-
+prop.table(table(dat$afford_0,dat$metformin_0),margin = 2)
+#gastrointestinal adverse effects
+prop.table(table(dat$metformin_9,dat$gastroad_9),margin = 1)
+  prop.table(table(dat$metformin_0,dat$gastroad_0),margin = 1)
+# physica activity
+prop.table(table(dat$pa_0,dat$hrqolcat_0),margin = 1)
+prop.table(table(dat$pa_9,dat$hrqolcat_9),margin = 1)
+# metformin
+prop.table(table(dat$metformin_0,dat$intgroup_0),margin = 1)
+# cvd
+prop.table(table(dat$int,dat$cvd),margin = 1)
+# variation of intervention
+tab1 <- data.frame(rbind(as.vector(table(dat$intgroup_0)),
+      round(as.vector(prop.table(table(dat$intgroup_0))),2)))
+colnames(tab1) <- unique(dat$intgroup_0)
+rownames(tab1) <- c("population","proportion")
+# physical activity change
+(prop.table(table(dat$pa_9, dat$intgroup_0),margin = 2))-
+  (prop.table(table(dat$pa_0, dat$intgroup_0),margin = 2))
+#smoking reduction
+(prop.table(table(dat$smok_9, dat$intgroup_0),margin = 2))-
+  (prop.table(table(dat$smok_0, dat$intgroup_0),margin = 2))
+# cvd w.r.t. intervention
+(prop.table(table(dat$cvd, dat$intgroup_0),margin = 2))
+# metformin
+metfor <- dat[which(dat$intgroup_0=="Pharmacotherapy"),
+              c("metformin_0","metformin_9","educ_0")]
+prop.table(table(metfor$metformin_0))
+prop.table(table(metfor$metformin_9,exclude =NULL))
+prop.table(table(metfor[which(metfor$metformin_0=="1" && 
+                                metfor$metformin_9=="0"),]$educ_0))
+# group take->not take
+prop.table(table(metfor[which(metfor$metformin_0=="1" & metfor$metformin_9=="0"),]$educ_0))
+prop.table(table(metfor[which(metfor$metformin_0=="0" & metfor$metformin_9=="1"),]$educ_0))
+#
+```

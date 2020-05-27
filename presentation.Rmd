@@ -129,8 +129,6 @@ knitr::include_graphics("figures/adherence.pdf")
 - We also think that it is probably difficult in general to measure variables that really contribute to the subject, especially in only 10 year-follow up period
 
 
-
-
 # Individual and population health (RQ2)
 
 ## Introduction
@@ -142,6 +140,24 @@ knitr::include_graphics("figures/adherence.pdf")
 - Guidelines need to be designed based on substantial evidence 
 
 Over-treatment can be defined as an unnecessary or over-use of treatment. It may lead to potential patient harms and excessive costs in health care. In this project, we have noticed that the use of intensive Glycemic control, Metformin has no positive result for patients, in terms of health-related quality of life, while the problem of adverse events is a big issue. The problem on the cost is also obvious. Alternatively, physical activities are more recommended in terms of clinical efficiency.
+
+
+## Figure 1
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.5\textwidth]{figures/ssedscores.png}
+  \caption{Average residual CPQ \label{fig:ssedscores}}
+\end{figure}
+
+
+## Figure 2
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.5\textwidth]{figures/hospdens.png}
+  \caption{Average residual CPQ \label{fig:hospdens}}
+\end{figure}
 
 
 
@@ -194,8 +210,10 @@ sdc_data$fit_cpq <- fitted(fit_cpq2)
 ## Results - Cost-effectiveness of care
 
 - log-linear model: coefficients not as straightforward to interpret (Potential limitation of this approach) 
-- Costs per qaly increase with age and metformin treatment, and decrease with physical activity and baseline HrQOL
-- 
+- Costs per QALY increase with age and metformin treatment, and decrease with physical activity and baseline HrQOL
+- Strong evidence for a positive association of intervention protocols with cost per qaly
+- This implies that the intervention is less cost-effective than the control
+
 ## Results - Variation in care
 
 ```{r, eval=FALSE,include=FALSE,echo=FALSE, message=FALSE,warning=FALSE}
