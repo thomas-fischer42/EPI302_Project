@@ -1,0 +1,94 @@
+---
+title: "Untitled"
+author: ""
+date: "`r Sys.Date()`"
+output: 
+  beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## What are the positive and negative effects of the treatment protocol related to access and delivery of Diabetes care?
+- First, establish a definition of access and delivery of health care
+- Second, formulation of possible hypotheses
+- Third, use the provided data set to analyze and try to evaluate the proposed hypotheses
+
+## Access to Diabetes care
+We used the five dimensions of health care that were proposed in the lecture where:
+
+- \textbf{Availability}: is the relationship between supply and demand for health care services
+- \textbf{Accessibility}: is the geographical proximity to health care providers
+- \textbf{Accommodation}: is the relationship between how health care services are organized and the client's ability to accommodate these factors.
+- \textbf{Affordability}: is the costs of health care services and the ability of a patient to cover
+- \textbf{Acceptability}: is the patient's attitude towards the perceived characteristics of an intervention
+
+## Delivery of Diabetes care
+We used adherence to treatment guidelines as the definition to delivery of Diabetes care.
+In this example the NRP used an overall guideline score, which consts of the accrual of the following parameters:
+
+- \textbf{HBA1C level <53 mmol/mol}: 12 points
+- \textbf{HBA1C level <64 mmol/mol}: 8 points
+- \textbf{HBA1C level <75 mmol/mol}: 5 points
+- \textbf{three GP visits per year}: 10 points
+- \textbf{physical activity}: 5 points
+- \textbf{stop smoking}: 5 points
+
+## Formulation of hypotheses - Access to Diabetes care
+- The provided data only allowed for the analysis of the dimension of accessibility and affordability
+- There was no data to analyze the development of the accessibility
+  - Assumption: number of hospitals and GPs stayed relatively constant (short follow-up period)
+- As there is intensified use of Metformin in the pharmacotherapy group we could expect that the affordability of Diabetes care is decreased as the costs increase
+- Further, we thought that as the treatment groups receive additional recommendations regarding their health, we could expect that patients in the intervention groups are more health literate compared to control
+
+## Formulation of hypotheses - Delivery of Diabetes care
+- We expect the overall adherence to guidelines score to be increased in the intervention groups compared to control as the additional, 
+specialized treatment should increase their overall well-being
+
+## Analysis and results - Accessibility
+- The following figure shows that the accessibility to hospitals was larger in the control group than in the intervention groups
+- However, the accessibility to GPs is larger in the intervention groups than in the control group
+- We assume that the intervention groups were chosen in that manner to observe a strong effect in the intervention groups
+
+```{r}
+knitr::include_graphics("accessibility.pdf")
+```
+
+## Analysis and results - Affordability
+- We can see that the overall affordability of health care costs has increased from 2002 to 2012 in all three treatment groups
+- Further, the proportional increase in the pharmacotherapy group is not as large as in the other two treatment groups
+- As the affordability has also increased in the control group, we cannot conclude that the treatment protocol had a positive effect on the affordability of health care costs
+
+```{r}
+knitr::include_graphics("afford.pdf")
+```
+
+## Analysis and results - Health literacy A
+- We can see that the overall health literacy has improved in all three treatment group
+- However, the proportional growth is not as large in the control group as was to be expected
+
+```{r}
+knitr::include_graphics("health_literate.pdf")
+```
+
+## Analysis and results - Health literacy B
+- Further analysis shows that the treatment protocol was especially efficacious in persons with migration background
+- We assume that they were not able to get proper treatment and that the additional recommendations have really helped those to improve their well-being who were not aware of additional treatment
+
+```{r}
+knitr::include_graphics("health_literate_mig.pdf")
+```
+
+## Analysis and results - Delivery
+- The figure shows that the overall adherence has increased for all three treatment groups
+- The assumed difference between the treatment group however is not substantial
+- We assume that because of the information era that we are living in now, people live generally healthier now than in 2002
+
+```{r}
+knitr::include_graphics("adherence.pdf")
+```
+
+## Conclusion
+- We found it difficult to assess if the treatment protocol had a positive or negative influence on the access and delivery of Diabetes care
+- We also think that it is probably difficult in general to measure variables that really contribute to the subject, especially in only 10 year-follow up period
