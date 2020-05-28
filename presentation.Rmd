@@ -1,7 +1,7 @@
 ---
-title: "Untitled"
-author: "Thomas Fischer"
-date: "27 5 2020"
+title: "EPI302 Miniproject"
+author: "Joël Meili, Thomas Fischer, Xijin Chen"
+date: "`r Sys.Date()`"
 
 header-includes:
   - \usepackage{graphicx}
@@ -16,19 +16,87 @@ bibliography: references/references.bib
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
+```{r, include=FALSE,message=FALSE,warning=FALSE}
+library(dplyr)
+library(texreg)
+library(ggplot2)
+source("source/prepare_data.R")
+source("source/models_qaly.R")
+source("source/models_cpq.R")
+sdc_data$fit_qaly <- fitted(fit_qaly2)
+sdc_data$fit_cpq <- fitted(fit_cpq3)
+
+png("figures/metformin_treat.png")
+sdc_data %>% 
+  filter(death == "No") %>%
+  group_by(intgroup_0) %>%
+  mutate(total_count = n()) %>%
+  group_by(intgroup_0, metformin_0, metformin_9) %>%
+  summarise(freq = n()/first(total_count)) %>%
+  ungroup() %>% 
+  ggplot() + 
+  geom_bar(aes(x = interaction(metformin_0, metformin_9),
+               y = freq, group = intgroup_0, fill = intgroup_0), col = "black",
+           stat = "identity",
+           position = "dodge") + 
+  xlab("Metformin treatment status in 2002 and 2012") + 
+  ylab("Frequency within intervention region") + 
+  theme_minimal()
+dev.off()
+```
+
+```{r, eval=FALSE,include=FALSE,echo=FALSE, message=FALSE,warning=FALSE}
+tmp <- sdc_data %>%
+  group_by(canton_abr, canton_0, intgroup_0) %>%
+  summarise(qaly = mean(qaly),
+            fit_qaly = mean(fit_qaly),
+            resid_qaly = mean(qaly-fit_qaly)) %>%
+  ungroup() %>% 
+  mutate(geometry = canton_geom(canton_0))
+
+ggplot(tmp) + 
+  geom_sf(aes(geometry = geometry, fill = fit_qaly, col = intgroup_0)) + 
+  geom_sf_label(aes(geometry = geometry, label = canton_abr),
+                size=2, alpha = 0.1) + 
+  xlab("") + ylab("") +
+  theme_minimal() + 
+  ggsave("figures/variation_qaly.png")
+```
+
+```{r, eval=FALSE,include=FALSE, echo=FALSE,message=FALSE,warning=FALSE}
+tmp <- sdc_data %>%
+  group_by(canton_abr, canton_0, intgroup_0) %>%
+  summarise( cpq = mean(cpq),
+             fit_cpq = mean(exp(fit_cpq)),
+             resid_cpq = mean(cpq - exp(fit_cpq))) %>%
+  ungroup() %>% 
+  mutate(geometry = canton_geom(canton_0))
+
+ggplot(tmp) + 
+  geom_sf(aes(geometry = geometry, fill = fit_cpq, col = intgroup_0)) + 
+  geom_sf_label(aes(geometry = geometry, label = canton_abr),
+                size=2, alpha = 0.1) + 
+  xlab("") + ylab("") +
+  theme_minimal() +
+  ggsave("figures/variation_cpq.png")
+
+```
+
 # Introduction
 
-## NRP - Overview
+## National research program
+
 - Conducted by Swiss Diabetes Registry
-- Longitudinal cohort study of Diabetes patients
-- Ran from 2002 to 2012
-- Intervention: tailored treatment guidelines for Diabetes patients
+- Longitudinal cohort study of `r nrow(sdc_data)` Diabetes patients from all Swiss cantons from 2002 to 2012
+- Intervention: Tailored treatment protocols for Diabetes patients (Physical activity, Pharmacotherapy) and control
 - Outcomes: 
-  - Healthcare accessibility and delivery (RQ1)
-  - Individual and population health (RQ2)
-  - Health care system outcomes and variation in care (RQ3)
+  - Healthcare accessibility and delivery
+  - Individual and population health
+  - Health care system outcomes and variation in care
   
 ## NRP - Intervention assignment regions 
+
+Patients were assigned to an intervention by canton of residence.
 
 \begin{figure}[!ht]
   \centering
@@ -163,141 +231,159 @@ Over-treatment can be defined as an unnecessary or over-use of treatment. It may
 
 # Health care system outcomes and variation in care (RQ3)
 
-```{r, include=FALSE,message=FALSE,warning=FALSE}
-library(dplyr)
-library(texreg)
-library(ggplot2)
-source("source/prepare_data.R")
-source("source/models_qaly.R")
-source("source/models_cpq.R")
-sdc_data$fit_qaly <- fitted(fit_qaly1)
-sdc_data$fit_cpq <- fitted(fit_cpq2)
-```
+## Introduction
+
+Research question: how does the intervention affect health care system outcomes and variation in Diabetes care?
+
+- Health care systems provide a service, and operate on a budget
+- Service quality and cost-effectiveness are important performance measures and may vary by hospital, canton, or region
+- Quality adjusted life years (QALY): defined as number of years under observation discounted by quality of life
+- High QALY implies effective and efficient treatment (low mortality, high quality of life)
+- Low QALY can imply overtreatment (negative side effects from drug treatments)
 
 ## Introduction
 
+Question: what do we mean by variation?
+
+Answer: under- or overuse of a treatment
+
+- Effective care: treatments are chosen based on the available evidence
+- Patient sensitive care: shared decision making between physicians and patients. Patient preferences factor into treatment choices
+- Supply sensitive care: Treatment selected by availability and necessity
+
+
+## Introduction
+
+Intervention characteristics:
+
+- Treatment protocols provide patients with information intended to change their behaviour (Nudging)
+- Physicians and general practitioners also received specialized training
+
+Hypotheses:
+
+- Tailored treatment protocols are associated with increased quality adjusted life years (QALY)
+- Tailored treatment protocols are associated with lower costs per QALY
+
 ## Method
+
 - Exploratory data analysis
 - A linear regression model was used to estimate the intervention effect on QALY 
 - A log-linear regression model was used to estimate the intervention effect on cost per QALY
-- Variability in care was evaluated graphically.
+- Variability in care was evaluated graphically using proportions
 
 ## Results - Observations from data analysis 
 
-- Intuition: inpatient treatments are expensive. Costs should therefore increase substantially with each hospitalisation 
-- In practice: cumulative costs were surprisingly low for some patients with comorbidities in 2002 and with CVD.
-- This did not occur for patients without comorbidities in 2002 and with CVD
-- This was still the case after removing data from patients who died between follow-ups
-- There were no observable differences between the intervention regions
-- Indication for the existence of a (unknown to us) source of variation
+- Regression to the mean: patient reported Health-related quality of life (HrQOL) more moderate in 2012 than in 2002 (cf. Figure \ref{fig:hrqol_transition})
+- Cumulative costs were surprisingly low for some patients with comorbidities in 2002 and with CVD
+- This did not occur for patients with no comorbidities in 2002 (cf. Figure \ref{fig:hosp_cumcost}) 
+- Intuition: inpatient treatments for CVD are expensive. Costs should therefore increase substantially with each hospitalisation 
+- Indication for the existence of a (unknown to us) source of variation related to comorbidities?
+
+## Results - Observations from data analysis
+
+:::::: {.columns}
+::: {.column width="55%" data-latex="{0.55\textwidth}"}
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/hrqol_transition.png}
+  \caption{HrQOL in 2002 and 2012 \label{fig:hrqol_transition}}
+\end{figure}
+:::
+::: {.column width="55%" data-latex="{0.55\textwidth}"}
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/hosp_cumcost.png}
+  \caption{Hospitalisations and cumulative cost stratified by presence of comorbidities in 2002 and intervention \label{fig:hosp_cumcost}}
+\end{figure}
+:::
+::::::
 
 ## Results - Quality of care
 
 \input{tables/fit_qaly.tex}
 
 ## Results - Quality of care
-
 - Strong evidence for a negative association between the age and metformin treatments with QALY
-- Effect is effectively outbalanced by physical activity and baseline health-related quality of life
-- Strong evidence for a positive effect of physical activity protocol, but questionable practical significance
-- No evidence for any effect of pharmacotherapy protocol on QALY.
-- Effect estimates stable for different model specificaitons (adjusting for obstime, excluding dead patients)
+- Effect is outbalanced by physical activity and baseline level of health-related quality of life
+- Hospital density only significant in baseline model
+- Strong evidence for a positive effect of physical activity protocol, but questionable practical significance (approx. 1 month)
+- No evidence of any effect for the pharmacotherapy protocol
+- Estimates stable across different model specificaitons (adjusting for obstime, excluding dead patients)
 
-## Results - Cost-effectiveness of care
+## Results - Cost-effectiveness
 
 \input{tables/fit_cpq.tex}
 
-## Results - Cost-effectiveness of care
+## Results - Cost-effectiveness
 
-- log-linear model: coefficients not as straightforward to interpret (Potential limitation of this approach) 
-- Costs per QALY increase with age and metformin treatment, and decrease with physical activity and baseline HrQOL
-- Strong evidence for a positive association of intervention protocols with cost per qaly
-- This implies that the intervention is less cost-effective than the control
+- log-linear model: coefficients not as straightforward to interpret, but necessary compromise
+- Costs per QALY increase with age and metformin treatment, and decrease with physical activity, comorbidities and baseline HrQOL, but not in all models
+- Hospital density decreases cost per QALY, but questionable practical significance
+- Hospitalisations included to account for large costs arising from inpatient treatments
+- Strong evidence for a positive association of both intervention protocols with cost per QALY
+- This implies that both interventions are less cost-effective than the control
 
-## Results - Variation in care
+## Results - Variation in use of metformin
 
-```{r, eval=FALSE,include=FALSE,echo=FALSE, message=FALSE,warning=FALSE}
-tmp <- sdc_data %>%
-  group_by(canton_abr, canton_0, intgroup_0) %>%
-  summarise(resid_qaly = mean(qaly-fit_qaly)) %>%
-  ungroup() %>% 
-  mutate(geometry = canton_geom(canton_0))
+:::::: {.columns}
+::: {.column width="55%" data-latex="{0.55\textwidth}"}
+- Predominantly no deviation from established treatment
+- Transitions into metformin treatment were more common in the pharmacotherapy region than elsewhere
+- Table \ref{tab:fit_qaly} indicated negative effect of metformin on QALY, and no effect of pharmacotherapy protocol compared to control
+- Suggestive of overuse of metformin
+:::
 
-png("figures/variation_qaly.png")
-ggplot(tmp) + 
-  geom_sf(aes(geometry = geometry, fill = resid_qaly, col = intgroup_0)) + 
-  geom_sf_label(aes(geometry = geometry, label = canton_abr),
-                size=2, alpha = 0.4) + 
-  xlab("") + ylab("") +
-  theme_minimal() +
-  theme(legend.position="bottom", legend.box = "horizontal")
-dev.off()
-```
+::: {.column width="55%" data-latex="{0.55\textwidth}"}
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/metformin_treat.png}
+  \caption{Frequency of treatment progressions within intervention groups \label{fig:metformin_treat}}
+\end{figure}
+:::
+::::::
+
+## Results - regional variations in quality of care
 
 \begin{figure}[!ht]
   \centering
-  \includegraphics[width=0.5\textwidth]{figures/variation_qaly.png}
-  \caption{Average residual QALY \label{fig:variation_qaly}}
+  \includegraphics[width=0.7\textwidth]{figures/variation_qaly.png}
+  \caption{Average predicted QALY \label{fig:variation_qaly}}
 \end{figure}
 
-## Results - Variation in care
-
-- Quality of health-care appears to be higher in french-speaking cantons
-- QALY was higher than expected in Appenzell-Ausserrhoden
-- QALY was lower than expected in Uri
-
-## Results - Variation in care
-
-```{r, eval=FALSE,include=FALSE, echo=FALSE,message=FALSE,warning=FALSE}
-tmp <- sdc_data %>%
-  group_by(canton_abr, canton_0, intgroup_0) %>%
-  summarise(resid_cpq = mean(cpq - exp(fit_cpq))) %>%
-  ungroup() %>% 
-  mutate(geometry = canton_geom(canton_0))
-png("figures/variation_cpq.png")
-ggplot(tmp) + 
-  geom_sf(aes(geometry = geometry, fill = resid_cpq, col = intgroup_0)) + 
-  geom_sf_label(aes(geometry = geometry, label = canton_abr),
-                size=2, alpha = 0.4) + 
-  xlab("") + ylab("") +
-  theme_minimal() +
-  theme(legend.position="bottom", legend.box = "horizontal")
-dev.off()
-```
+## Results - regional variation in cost-effectiveness
 
 \begin{figure}[!ht]
   \centering
-  \includegraphics[width=0.5\textwidth]{figures/variation_cpq.png}
-  \caption{Average residual CPQ \label{fig:variation_cpq}}
+  \includegraphics[width=0.7\textwidth]{figures/variation_cpq.png}
+  \caption{Average predicted CPQ \label{fig:variation_cpq}}
 \end{figure}
 
-## Results - Variation in care
+## Discussion - health care outcomes and variation
 
-- Predicted cost per QALY was closest to the truth in french-speaking cantons (except Jura), Schaffhausen, Basel, Thurgau, and Appenzell Ausserrhoden.
-- Jura, Uri, and Appenzell-Innerrhoden had larger CPQ on average than predicted by our model. 
+- The physical activity protocol appears to be more benefitial than either the control or the pharmacotherapy protocol
+- Both treatment protocols were less cost-effective than the control
+- Results are in line with those of similar studies (such as \cite{william2015})
+- Patients were newly prescribed metformin prescriptions more frequently in the pharmacotherapy region, suggesting overuse of metformin
+- Plausible explanation: physicians and patients were sensitised by the information provided by the treatment protocol
 
-
-## Discussion - Health care outcomes
-
-- The physical activity protocol was the most benefitial in terms of QALY
-- The pharmacotherapy protocol did not yield a significant benefit compared to the control. 
-- Both treatment protocols were less cost-effective than the control (increased costs per QALY). 
-- Results are in line with those of similar studies (such as \cite{william2015}).
-- Hospdens marginally significant for QALY, and no evidence for an effect on cost per QALY.
-
-## Discussion - Variation in care
-
-- Some cantons performed worse ceteris paribus than their peers
-- Canton Uri had worse QALY and CPQ on average than we would have expected based on our results.
-- Large difference between Appenzell-Innerrhoden and Ausserrhoden
-- Results could indicate that intercantonal competition is also a factor.
+## Discussion - Regional variation
+- Canton Uri had the lowest average QALY. This was in line with our expectations. It also underperformed with respect to CPQ
+- Appenzell-Ausserrhoden outclassed its neighboring cantons on QALY and exceeded our expectations
+- Large difference between Appenzell-Innerrhoden and Ausserrhoden with respect to cost-effectiveness
+- Could indicate that intercantonal competition is a factor
 
 ## Discussion - Limitations
+
 - Lack of randomization: interventions assigned to patients by canton of residence. Hence, our results are only observational
-- Lack of information about medical history of individual patients (potentially to protect patient privacy).
-- Relatively long follow-up time may be appropriate to study properties of the health care system, but much can change in 10 years for a patient.
+- Lack of information about medical history of individual patients
+- Relatively long follow-up time may be appropriate to study properties of the health care system, but much can change in 10 years for a patient
+- Model assumptions do not hold up for the models of cost per QALY
+
 
 ## Discussion - Implications of findings
+
 - Cost-benefit analysis indicates that neither treatment protocol should be implemented from an economic perspective
-- However: substantial increase in QALY for physical activity group 
-- Future research should explore the effectiveness of physical activity protocol in a randomized trial / N-of-1 trials
+- However: QALY significantly increased under the physical activity protocol
+- Further benefits could manifest in the long-term
+- Future research should explore the effectiveness of physical activity protocol in a randomized trial.

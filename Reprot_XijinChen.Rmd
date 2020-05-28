@@ -140,7 +140,7 @@ ssedscore9 <- ggplot(dat,aes(x=intgroup_0,y=ssedscore_9))+
   stat_summary(fun.data = give.median,geom = "text")+
   stat_summary(fun.data = give.mean,geom = "text",col="red")
 
-pdf("figures/ssedscores.pdf")
+png("figures/ssedscores.png")
 ggpubr::ggarrange(ssedscore0,ssedscore9,nrow=1,ncol=2)
 dev.off()
 ```
@@ -223,7 +223,7 @@ c <- ggplot(dat, aes(x=hosp10kmdens_0,color=intgroup_0,fill=intgroup_0)) +
  theme(legend.position = "bottom",
        axis.title.x=element_text(size=7))
 
-pdf("figures/hospdens.pdf")
+png("figures/hospdens.png")
 ggpubr::ggarrange(a,b,c,nrow=3,common.legend=TRUE)
 dev.off()
 ```
